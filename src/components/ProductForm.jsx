@@ -202,13 +202,14 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
               type="button"
               onClick={onCancel}
               variant="outline" 
-              className="flex-1 py-6 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              className="flex-1 py-6 border-gray-700 bg-slate-700 text-gray-300 hover:bg-gray-800 hover:text-white"
             >
               Cancel
             </Button>
             <Button 
               type="submit" 
               className="flex-1 py-6 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              disabled={uploading}
             >
               {product ? 'Update Product' : 'Create Product'}
             </Button>
