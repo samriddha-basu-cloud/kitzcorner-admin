@@ -12,8 +12,8 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             {/* Logo */}
-              <div className="relative">
-            <div className="absolute -inset-1 rounded-full blur-md bg-blue-500/30"></div>
+            <div className="relative">
+              <div className="absolute -inset-1 rounded-full blur-md bg-blue-500/30"></div>
               <div className="relative flex items-center justify-center space-x-4">
                 <img
                   src={Logo}
@@ -24,15 +24,15 @@ const Footer = () => {
                   KitzCorner
                 </p>
               </div>
-                </div>
-            <p className="text-gray-400 text-sm ml-8">
+            </div>
+            <p className="text-gray-400 text-sm ml-8 md:ml-0">
               Your creative corner for innovative solutions.
             </p>
           </div>
 
           {/* Quick Contact */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold after:content-[''] after:block after:w-12 after:h-1 after:bg-blue-500 after:mt-2 mx-auto md:mx-0">Contact</h3>
+            <h3 className="text-lg font-semibold after:content-[''] after:block after:w- after:h-1 after:bg-blue-900 after:mt-2 mx-auto md:mx-0">Contact</h3>
             <div className="space-y-3">
               <a href="mailto:soumib3008@gmail.com" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors duration-300 justify-center md:justify-start group">
                 <div className="p-2 bg-gray-800 rounded-full group-hover:bg-blue-500/20 transition-colors duration-300">
@@ -57,7 +57,7 @@ const Footer = () => {
 
           {/* Social Links */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold after:content-[''] after:block after:w-12 after:h-1 after:bg-blue-500 after:mt-2 mx-auto md:mx-0">Connect</h3>
+           <h3 className="text-lg font-semibold after:content-[''] after:block after:w after:h-1 after:bg-blue-900 after:mt-2 mx-auto md:mx-0 text-center md:text-left">Connect</h3>
             <div className="flex gap-4 justify-center md:justify-start">
               <a 
                 href="https://Instagram.com" 
@@ -83,7 +83,7 @@ const Footer = () => {
 
         {/* Copyright Bar */}
         <div className="mt-12 pt-8 border-t border-gray-800/50">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
             <p className="text-sm text-gray-400">
               © {currentYear} <span className="font-medium">KitzCorner</span>. All rights reserved.
             </p>
