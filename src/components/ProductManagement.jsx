@@ -1,13 +1,89 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, Edit, Plus, Tag, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit, Plus, Tag, ShoppingCart, AlertTriangle, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import ProductForm from './ProductForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+
+// Image Carousel Component
+const ImageCarousel = ({ images }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  
+  const goToPrevious = useCallback((e) => {
+    e.stopPropagation();
+    setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
+    setIsAutoScrolling(false);
+  }, [images.length]);
+
+  const goToNext = useCallback((e) => {
+    e.stopPropagation();
+    setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
+    setIsAutoScrolling(false);
+  }, [images.length]);
+
+  // Auto scroll functionality
+  useEffect(() => {
+    if (!isAutoScrolling || images.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [images.length, isAutoScrolling]);
+
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+        <ImageIcon className="h-12 w-12 text-gray-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      <img
+        src={images[currentIndex]}
+        alt={`Product image ${currentIndex + 1}`}
+        className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+      />
+      
+      {images.length > 1 && (
+        <>
+          <button 
+            onClick={goToPrevious}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all opacity-0 group-hover:opacity-100"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={goToNext}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all opacity-0 group-hover:opacity-100"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          
+          {/* Image indicator dots */}
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+            {images.map((_, index) => (
+              <span 
+                key={index} 
+                className={`block h-1.5 rounded-full transition-all ${
+                  currentIndex === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -107,7 +183,6 @@ const ProductManagement = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Product Management</h1>
-            
             <p className="text-gray-400 mt-1">Manage your art collection inventory</p>
           </div>
           
@@ -141,9 +216,7 @@ const ProductManagement = () => {
             ))}
           </div>
         ) : products.length === 0 ? (
-            
           <Card className="bg-gray-800 border-gray-700 py-16">
-            
             <CardContent className="flex flex-col items-center justify-center text-center">
               <ShoppingCart className="h-16 w-16 text-gray-600 mb-4" />
               <h3 className="text-xl font-medium text-gray-300 mb-2">No Products Yet</h3>
@@ -156,12 +229,10 @@ const ProductManagement = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 ">
-            
-                        {products.map((product) => (
-              <div className="relative">
+            {products.map((product) => (
+              <div key={product.id} className="relative">
                 <div className="absolute -inset-1 rounded-lg blur-md bg-blue-500/30"></div>
                 <Card 
-                  key={product.id} 
                   className="relative bg-gray-800 border-gray-700 hover:shadow-xl transition-all duration-300 overflow-hidden group"
                 >
                   <CardHeader className="pb-3">
@@ -174,17 +245,7 @@ const ProductManagement = () => {
                   </CardHeader>
                   <CardContent className="pb-4">
                     <div className="aspect-square relative overflow-hidden rounded-lg mb-4">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                          <ImageIcon className="h-12 w-12 text-gray-600" />
-                        </div>
-                      )}
+                      <ImageCarousel images={product.images || []} />
                       {product.discount > 0 && (
                         <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md">
                           {product.discount}% OFF
