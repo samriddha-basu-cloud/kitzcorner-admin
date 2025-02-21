@@ -10,14 +10,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Image Carousel Component
 import PropTypes from 'prop-types';
 
+// Image Carousel Component
 const ImageCarousel = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
-  
+
   const goToPrevious = useCallback((e) => {
     e.stopPropagation();
     setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
@@ -33,11 +32,11 @@ const ImageCarousel = ({ images }) => {
   // Auto scroll functionality
   useEffect(() => {
     if (!isAutoScrolling || images.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [images.length, isAutoScrolling]);
 
@@ -56,27 +55,27 @@ const ImageCarousel = ({ images }) => {
         alt={`Product image ${currentIndex + 1}`}
         className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
       />
-      
+
       {images.length > 1 && (
         <>
-          <button 
+          <button
             onClick={goToPrevious}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all opacity-0 group-hover:opacity-100"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button 
+          <button
             onClick={goToNext}
             className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-all opacity-0 group-hover:opacity-100"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          
+
           {/* Image indicator dots */}
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
             {images.map((_, index) => (
-              <span 
-                key={index} 
+              <span
+                key={index}
                 className={`block h-1.5 rounded-full transition-all ${
                   currentIndex === index ? 'w-4 bg-white' : 'w-1.5 bg-white/60'
                 }`}
@@ -104,7 +103,7 @@ const ProductManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
-  
+
   // Predefined categories
   const categoryTabs = [
     { id: 'all', label: 'All' },
@@ -118,22 +117,28 @@ const ProductManagement = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-  
+
   // Filter products based on search query and selected category
   useEffect(() => {
     let result = [...products];
-    
+
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        product => 
-          product.name?.toLowerCase().includes(query) || 
+        product =>
+          product.name?.toLowerCase().includes(query) ||
           product.description?.toLowerCase().includes(query) ||
-          product.category?.toLowerCase().includes(query)
+          product.category?.toLowerCase().includes(query) ||
+          product.dimensions?.toLowerCase().includes(query) ||
+          product.medium?.toLowerCase().includes(query) ||
+          product.discount?.toString().includes(query) ||
+          product.price?.toString().includes(query) ||
+          product.reviews?.some(review => review.text?.toLowerCase().includes(query)) ||
+          (product.availability ? 'available' : 'unavailable').includes(query)
       );
     }
-    
+
     // Filter by category tab
     if (activeCategory !== 'all') {
       if (activeCategory === 'uncategorized') {
@@ -146,7 +151,7 @@ const ProductManagement = () => {
         );
       }
     }
-    
+
     setFilteredProducts(result);
   }, [products, searchQuery, activeCategory]);
 
@@ -176,6 +181,10 @@ const ProductManagement = () => {
         discount: parseFloat(formData.discount) || 0,
         category: formData.category,
         images: formData.images,
+        dimensions: formData.dimensions,
+        medium: formData.medium,
+        reviews: formData.reviews,
+        availability: formData.availability,
         updatedAt: serverTimestamp()
       };
 
@@ -246,16 +255,16 @@ const ProductManagement = () => {
             <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Product Management</h1>
             <p className="text-gray-400 mt-1">Manage your art collection inventory</p>
           </div>
-          
-          <Button 
-            onClick={() => setIsCreateOpen(true)} 
+
+          <Button
+            onClick={() => setIsCreateOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add New Product
           </Button>
         </div>
-        
+
         {/* Search and Category Tabs */}
         <div className="mb-8">
           <div className="relative mb-6">
@@ -270,7 +279,7 @@ const ProductManagement = () => {
               onChange={handleSearchChange}
             />
             {searchQuery && (
-              <button 
+              <button
                 onClick={clearSearch}
                 className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200"
               >
@@ -278,13 +287,13 @@ const ProductManagement = () => {
               </button>
             )}
           </div>
-          
+
           <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
             <div className="border-b border-gray-700 mb-6 overflow-x-auto">
               <TabsList className="bg-transparent h-auto p-0 space-x-2">
                 {categoryTabs.map(tab => (
-                  <TabsTrigger 
-                    key={tab.id} 
+                  <TabsTrigger
+                    key={tab.id}
                     value={tab.id}
                     className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow py-2 px-4 rounded-t-lg text-gray-400 hover:text-gray-200 transition-all border-b-2 border-transparent data-[state=active]:border-blue-600"
                   >
@@ -293,7 +302,7 @@ const ProductManagement = () => {
                 ))}
               </TabsList>
             </div>
-            
+
             {/* Products Grid */}
             {categoryTabs.map(tab => (
               <TabsContent key={tab.id} value={tab.id} className="mt-0">
@@ -333,7 +342,7 @@ const ProductManagement = () => {
               <AlertDialogCancel className="bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700">
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
@@ -345,7 +354,7 @@ const ProductManagement = () => {
       </div>
     </div>
   );
-  
+
   // Helper function to render products grid
   function renderProductsGrid() {
     if (isLoading) {
@@ -371,7 +380,7 @@ const ProductManagement = () => {
         </div>
       );
     }
-    
+
     if (filteredProducts.length === 0) {
       return (
         <Card className="bg-gray-800 border-gray-700 py-12">
@@ -391,7 +400,7 @@ const ProductManagement = () => {
               <>
                 <ShoppingCart className="h-12 w-12 text-gray-600 mb-4" />
                 <h3 className="text-xl font-medium text-gray-300 mb-2">
-                  {activeCategory !== 'all' 
+                  {activeCategory !== 'all'
                     ? `No ${categoryTabs.find(c => c.id === activeCategory)?.label} Products`
                     : 'No Products Yet'}
                 </h3>
@@ -410,13 +419,13 @@ const ProductManagement = () => {
         </Card>
       );
     }
-    
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {filteredProducts.map((product) => (
           <div key={product.id} className="relative">
             <div className="absolute -inset-1 rounded-lg blur-md bg-blue-500/30"></div>
-            <Card 
+            <Card
               className="relative bg-gray-800 border-gray-700 hover:shadow-xl transition-all duration-300 overflow-hidden group"
             >
               <CardHeader className="pb-3">
@@ -443,6 +452,22 @@ const ProductManagement = () => {
                     <p className="ml-2 text-sm text-gray-400 line-through">₹{product.price}</p>
                   )}
                 </div>
+                <div className="mt-2 text-gray-400">
+                  <p><strong>Dimensions:</strong> {product.dimensions}</p>
+                  <p><strong>Medium:</strong> {product.medium}</p>
+                  <p><strong>Availability:</strong> {product.availability ? 'Available' : 'Unavailable'}</p>
+                </div>
+                {product.reviews && product.reviews.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-gray-300 font-semibold">Reviews:</h4>
+                    {product.reviews.map((review, index) => (
+                      <div key={index} className="mt-2">
+                        <p className="text-gray-400"><strong>Rating:</strong> {review.rating}/5</p>
+                        <p className="text-gray-400"><strong>Review:</strong> {review.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between pt-0 border-t border-gray-700">
                 <p className="text-xs text-gray-500 flex items-center">
@@ -450,16 +475,16 @@ const ProductManagement = () => {
                   ID: {product.id.substring(0, 8)}...
                 </p>
                 <div className="flex space-x-2">
-                  <Button 
-                    onClick={() => handleEdit(product)} 
-                    variant="outline" 
+                  <Button
+                    onClick={() => handleEdit(product)}
+                    variant="outline"
                     size="icon"
                     className="h-8 w-8 border-gray-600 hover:border-blue-500 hover:bg-blue-900/20 hover:text-blue-400 transition-colors"
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    onClick={() => openDeleteDialog(product.id)} 
+                  <Button
+                    onClick={() => openDeleteDialog(product.id)}
                     variant="outline"
                     size="icon"
                     className="h-8 w-8 border-gray-600 hover:border-red-500 hover:bg-red-900/20 hover:text-red-400 transition-colors"
