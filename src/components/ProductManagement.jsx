@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { collection, addDoc, deleteDoc, updateDoc, doc, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Trash2, Edit, Plus, Tag, ShoppingCart, AlertTriangle, ChevronLeft, ChevronRight, Image as ImageIcon, Search, X } from 'lucide-react';
 import ProductForm from './ProductForm';
@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Image Carousel Component
+import PropTypes from 'prop-types';
+
 const ImageCarousel = ({ images }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
@@ -85,6 +87,10 @@ const ImageCarousel = ({ images }) => {
       )}
     </div>
   );
+};
+
+ImageCarousel.propTypes = {
+  images: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 const ProductManagement = () => {
@@ -375,7 +381,7 @@ const ProductManagement = () => {
                 <Search className="h-12 w-12 text-gray-600 mb-4" />
                 <h3 className="text-xl font-medium text-gray-300 mb-2">No matching products found</h3>
                 <p className="text-gray-400 max-w-md mb-6">
-                  No products match your search for "{searchQuery}" in the {activeCategory !== 'all' ? categoryTabs.find(c => c.id === activeCategory)?.label : 'selected'} category.
+                  No products match your search for &quot;{searchQuery}&quot; in the {activeCategory !== 'all' ? categoryTabs.find(c => c.id === activeCategory)?.label : 'selected'} category.
                 </p>
                 <Button onClick={clearSearch} variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-700">
                   Clear Search

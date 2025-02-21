@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -218,6 +219,11 @@ const ProductForm = ({ onSubmit, product, onCancel }) => {
       </CardContent>
     </Card>
   );
+};
+ProductForm.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+  product: PropTypes.object,
+  onCancel: PropTypes.func.isRequired,
 };
 
 export default ProductForm;
