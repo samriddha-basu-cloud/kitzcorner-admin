@@ -111,7 +111,7 @@ const ProductManagement = () => {
     { id: 'uncategorized', label: 'Uncategorized' },
     { id: 'paintings', label: 'Paintings' },
     { id: 'sculptures', label: 'Sculptures' },
-    { id: 'digital', label: 'Digital Art' },
+    { id: 'digital art', label: 'Digital Art' },
     { id: 'photography', label: 'Photography' }
   ];
 
