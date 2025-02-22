@@ -6,23 +6,38 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 const PaymentForm = ({ onSubmit, payment, onCancel }) => {
   const [formData, setFormData] = useState({
-    id: payment?.id || uuidv4(),
-    customerName: payment?.customerName || '',
     transactionId: payment?.transactionId || '',
-    amount: payment?.amount || '',
     status: payment?.status || 'pending',
-    date: payment?.date || new Date().toISOString(),
   });
 
-  const statusOptions = ['completed', 'pending', 'failed'];
+  const statusOptions = ['pending', 'success', 'failed'];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData, !!payment);
+    try {
+      const paymentRef = doc(db, 'payments', payment.id);
+      await updateDoc(paymentRef, {
+        transactionId: formData.transactionId,
+        status: formData.status,
+      });
+
+      // Update the orders collection if the status is success or failed
+      if (formData.status === 'success' || formData.status === 'failed') {
+        const orderRef = doc(db, 'orders', payment.orderId);
+        await updateDoc(orderRef, {
+          paymentStatus: formData.status,
+        });
+      }
+
+      onSubmit(formData, !!payment);
+    } catch (error) {
+      console.error('Error updating payment:', error);
+    }
   };
 
   return (
@@ -47,18 +62,6 @@ const PaymentForm = ({ onSubmit, payment, onCancel }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="customerName" className="text-gray-300 font-medium">Customer Name</Label>
-              <Input
-                id="customerName"
-                value={formData.customerName}
-                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                required
-                className="mt-1 text-white bg-gray-800 border-gray-700 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter customer name"
-              />
-            </div>
-
-            <div>
               <Label htmlFor="transactionId" className="text-gray-300 font-medium">Transaction ID</Label>
               <Input
                 id="transactionId"
@@ -67,19 +70,6 @@ const PaymentForm = ({ onSubmit, payment, onCancel }) => {
                 required
                 className="mt-1 text-white bg-gray-800 border-gray-700 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter transaction ID"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="amount" className="text-gray-300 font-medium">Amount (₹)</Label>
-              <Input
-                type="number"
-                id="amount"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                required
-                className="mt-1 text-white bg-gray-800 border-gray-700 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="0.00"
               />
             </div>
 
@@ -96,18 +86,6 @@ const PaymentForm = ({ onSubmit, payment, onCancel }) => {
                   {statusOptions.map(status => <SelectItem key={status} value={status}>{status}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="date" className="text-gray-300 font-medium">Date</Label>
-              <Input
-                type="date"
-                id="date"
-                value={formData.date.split('T')[0]}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
-                className="mt-1 text-white bg-gray-800 border-gray-700 focus:ring-blue-500 focus:border-blue-500"
-              />
             </div>
           </div>
 

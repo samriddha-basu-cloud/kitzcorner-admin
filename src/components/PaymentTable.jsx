@@ -1,11 +1,42 @@
+import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import {  Edit, Trash2, CreditCard, Calendar } from 'lucide-react';
+import { Edit, Trash2, CreditCard, Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 const PaymentTable = ({ payments, onEdit, onDelete }) => {
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
+  const [customerNames, setCustomerNames] = useState({});
+
+  useEffect(() => {
+    const fetchCustomerNames = async () => {
+      const names = {};
+      for (const payment of payments) {
+        if (!payment.customerId) {
+          console.warn(`Customer ID is undefined for payment ID: ${payment.id}`);
+          names[payment.customerId] = 'Unknown Customer';
+          continue;
+        }
+        const customerDocRef = doc(db, 'customers', payment.customerId);
+        const customerDoc = await getDoc(customerDocRef);
+        if (customerDoc.exists()) {
+          names[payment.customerId] = customerDoc.data().name;
+        } else {
+          names[payment.customerId] = 'Unknown Customer';
+        }
+      }
+      setCustomerNames(names);
+    };
+
+    fetchCustomerNames();
+  }, [payments]);
+
+  const formatDate = (timestamp) => {
+    if (!timestamp || !timestamp.seconds) {
+      return 'Invalid Date';
+    }
+    const date = new Date(timestamp.seconds * 1000);
     return date.toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
@@ -35,16 +66,16 @@ const PaymentTable = ({ payments, onEdit, onDelete }) => {
                     <CreditCard className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-100">{payment.customerName}</p>
+                    <p className="font-medium text-gray-100">{customerNames[payment.customerId]}</p>
                   </div>
                 </div>
               </td>
               <td className="py-4 px-6 text-sm text-gray-300">{payment.transactionId}</td>
-              <td className="py-4 px-6 text-sm text-gray-300">₹{payment.amount}</td>
+              <td className="py-4 px-6 text-sm text-gray-300">₹{payment.totalAmount}</td>
               <td className="py-4 px-6">
                 <Badge
-                  variant={payment.status === 'completed' ? 'success' : payment.status === 'pending' ? 'warning' : 'error'}
-                  className={`text-xs ${payment.status === 'completed' ? 'bg-green-900/30 text-green-400' : payment.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}
+                  variant={payment.status === 'success' ? 'success' : payment.status === 'pending' ? 'warning' : 'error'}
+                  className={`text-xs ${payment.status === 'success' ? 'bg-green-900/30 text-green-400' : payment.status === 'pending' ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}
                 >
                   {payment.status || 'Unknown'}
                 </Badge>
@@ -52,7 +83,7 @@ const PaymentTable = ({ payments, onEdit, onDelete }) => {
               <td className="py-4 px-6">
                 <div className="flex items-center text-sm text-gray-400">
                   <Calendar className="h-4 w-4 mr-2" />
-                  {formatDate(payment.date)}
+                  {formatDate(payment.paymentDate)}
                 </div>
               </td>
               <td className="py-4 px-6">
@@ -87,11 +118,13 @@ PaymentTable.propTypes = {
   payments: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
-      customerName: PropTypes.string.isRequired,
+      customerId: PropTypes.string.isRequired,
       transactionId: PropTypes.string.isRequired,
-      amount: PropTypes.number.isRequired,
+      totalAmount: PropTypes.string.isRequired,
       status: PropTypes.string,
-      date: PropTypes.string.isRequired
+      paymentDate: PropTypes.shape({
+        seconds: PropTypes.number
+      })
     })
   ).isRequired,
   onEdit: PropTypes.func,

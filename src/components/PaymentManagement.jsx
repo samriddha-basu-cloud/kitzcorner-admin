@@ -3,13 +3,13 @@ import { collection, getDocs, deleteDoc, doc, updateDoc, addDoc } from 'firebase
 import { db } from '../firebase/config';
 import PaymentTable from './PaymentTable';
 import { Button } from "@/components/ui/button";
-import { Plus, Search, X, CreditCard, AlertTriangle } from 'lucide-react';
+import { Search, X, CreditCard, AlertTriangle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PaymentForm from './PaymentForm'; // You'll need to create this component
+import PaymentForm from './PaymentForm';
 
 const PaymentManagement = () => {
   const [payments, setPayments] = useState([]);
@@ -17,7 +17,6 @@ const PaymentManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -26,7 +25,7 @@ const PaymentManagement = () => {
   // Predefined payment status tabs
   const statusTabs = [
     { id: 'all', label: 'All Payments' },
-    { id: 'completed', label: 'Completed' },
+    { id: 'success', label: 'Success' },
     { id: 'pending', label: 'Pending' },
     { id: 'failed', label: 'Failed' }
   ];
@@ -46,7 +45,7 @@ const PaymentManagement = () => {
         payment =>
           payment.customerName?.toLowerCase().includes(query) ||
           payment.transactionId?.toLowerCase().includes(query) ||
-          payment.amount?.toString().includes(query)
+          payment.totalAmount?.toString().includes(query)
       );
     }
 
@@ -97,25 +96,23 @@ const PaymentManagement = () => {
   };
 
   const handleSubmit = async (formData, isEdit) => {
-  try {
-    if (isEdit && selectedPayment) {
-      // Update existing payment
-      await updateDoc(doc(db, 'payments', selectedPayment.id), formData);
-    } else {
-      // Create new payment
-      await addDoc(collection(db, 'payments'), formData);
+    try {
+      if (isEdit && selectedPayment) {
+        // Update existing payment
+        await updateDoc(doc(db, 'payments', selectedPayment.id), formData);
+      } else {
+        // Create new payment
+        await addDoc(collection(db, 'payments'), formData);
+      }
+      fetchPayments();
+      setIsEditOpen(false);
+      setSelectedPayment(null);
+    } catch (error) {
+      console.error('Error saving payment:', error);
     }
-    fetchPayments();
-    setIsCreateOpen(false);
-    setIsEditOpen(false);
-    setSelectedPayment(null);
-  } catch (error) {
-    console.error('Error saving payment:', error);
-  }
-};
+  };
 
   const handleCancel = () => {
-    setIsCreateOpen(false);
     setIsEditOpen(false);
     setSelectedPayment(null);
   };
@@ -136,14 +133,6 @@ const PaymentManagement = () => {
             <h1 className="text-3xl font-bold text-gray-100 tracking-tight">Payment Management</h1>
             <p className="text-gray-400 mt-1">Manage your payment transactions and information</p>
           </div>
-
-          <Button
-            onClick={() => setIsCreateOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Payment
-          </Button>
         </div>
 
         {/* Search and Status Tabs */}
@@ -192,13 +181,6 @@ const PaymentManagement = () => {
             ))}
           </Tabs>
         </div>
-
-        {/* Create Payment Dialog */}
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogContent className="sm:max-w-[700px] p-0 bg-transparent border-none shadow-none">
-            <PaymentForm onSubmit={handleSubmit} onCancel={handleCancel} />
-          </DialogContent>
-        </Dialog>
 
         {/* Edit Payment Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -279,10 +261,6 @@ const PaymentManagement = () => {
                     ? `You don't have any payments in the ${statusTabs.find(t => t.id === activeTab)?.label} category yet.`
                     : 'Start managing your payments by adding your first transaction.'}
                 </p>
-                <Button onClick={() => setIsCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add New Payment
-                </Button>
               </>
             )}
           </CardContent>
